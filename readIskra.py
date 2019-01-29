@@ -2,6 +2,11 @@ import serial
 import time
 import pymysql
 from convObis import ConvObis
+import json
+
+with open("settings.json", "r") as read_file:
+    data = json.load(read_file)
+
 
 db = pymysql.connect(host="127.0.0.1", user="plaUser", passwd="plasystem", db="plm", port=8744)
 cur = db.cursor()
@@ -23,10 +28,11 @@ try:
 	ser.isOpen()
 
 except:
-	exit()
+    print("Unexpected error:", sys.exc_info()[0])
+    # exit()
 
 if (ser.isOpen()):
-    ser.write(str.encode('\x2f\x3f'+'67872235'+'\x21\x0d\x0a'))
+    ser.write(str.encode('\x2f\x3f'+str(data[0]['meter_id'])+'\x21\x0d\x0a'))
     time.sleep(0.2)
     ser.write(bytes.fromhex('06 30 35 31 0d 0a'))
     time.sleep(1.5)
@@ -48,8 +54,10 @@ if (ser.isOpen()):
             indexOut = obis_code[i].find('*')
             obis_code[i] = obis_code[i][:indexOut]
 
-    cur.execute('INSERT INTO gadget_HW_meter (gadget_HW_id,kWh,kVArh_p,kVArh_n,kVAh,cur_sum_V,cur_L1_V,cur_L2_V,cur_L3_V,cur_F,meterDate)'
-                'VALUES (01,"%f","%f","%f","%f","%f","%f","%f","%f","%f","%f");' %(float(obis_code['kWh']),
+
+    cur.execute('INSERT INTO user_gadget_hw_meter (gadget_HW_id_id,kWh,kVArh_p,kVArh_n,kVAh,cur_sum_V,cur_L1_V,cur_L2_V,cur_L3_V,cur_F,meterDate)'
+                'VALUES ("%i","%f","%f","%f","%f","%f","%f","%f","%f","%f","%f");' %(data[0]['id'],
+                                                                                   float(obis_code['kWh']),
                                                                                    float(obis_code['kVArh_p']),
                                                                                    float(obis_code['kVArh_n']),
                                                                                    float(obis_code['kVAh']),
